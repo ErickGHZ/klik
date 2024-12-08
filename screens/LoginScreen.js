@@ -1,20 +1,79 @@
-import React from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ActivityIndicator } from 'react-native';
+import api from '../src/api'; // Asegúrate de tener configurada tu instancia de Axios
 
 export default function LoginScreen({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Por favor completa todos los campos');
+      return;
+    }
+
+    setLoading(true); // Mostrar pantalla de carga mientras se procesa
+    try {
+      const response = await api.post('/login', { email, password });
+      setLoading(false);
+
+      if (response.status === 200) {
+        Alert.alert('Éxito', 'Inicio de sesión exitoso');
+        navigation.navigate('Home'); // Redirigir a la pantalla principal
+      }
+    } catch (error) {
+      setLoading(false);
+      if (error.response) {
+        const { message } = error.response.data;
+
+        // Mostrar mensajes de error específicos
+        if (message === 'Usuario no encontrado') {
+          Alert.alert('Error', 'No existe una cuenta asociada a este correo.');
+        } else if (message === 'Contraseña incorrecta') {
+          Alert.alert('Error', 'La contraseña ingresada es incorrecta.');
+        } else {
+          Alert.alert('Error', 'Algo salió mal. Inténtalo de nuevo.');
+        }
+      } else {
+        // Error general (conexión, etc.)
+        Alert.alert('Error', 'No se pudo conectar con el servidor.');
+      }
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
-      <TextInput style={styles.input} placeholder="Correo electrónico" keyboardType="email-address" />
-      <TextInput style={styles.input} placeholder="Contraseña" secureTextEntry />
+      <TextInput
+        style={styles.input}
+        placeholder="Correo electrónico"
+        keyboardType="email-address"
+        value={email}
+        onChangeText={setEmail}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Contraseña"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('Home')}>
-        <Text style={styles.buttonText}>Iniciar Sesión</Text>
+        onPress={handleLogin}
+        disabled={loading} // Deshabilitar mientras se carga
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" /> // Indicador de carga
+        ) : (
+          <Text style={styles.buttonText}>Iniciar Sesión</Text>
+        )}
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.button, styles.secondaryButton]}
-        onPress={() => navigation.navigate('Register')}>
+        onPress={() => navigation.navigate('Register')}
+      >
         <Text style={styles.secondaryButtonText}>¿No tienes cuenta? Regístrate</Text>
       </TouchableOpacity>
     </View>
