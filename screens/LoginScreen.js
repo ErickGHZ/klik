@@ -47,8 +47,7 @@ export default function LoginScreen({ navigation }) {
       <Text style={styles.title}>Login</Text>
       <TextInput
         style={styles.input}
-        placeholder="Correo electrónico"
-        keyboardType="email-address"
+        placeholder="Correo electrónico o Nombre de usuario"
         value={email}
         onChangeText={setEmail}
       />
