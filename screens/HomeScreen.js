@@ -1,13 +1,47 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HomeScreen({ navigation }) {
+  const [inventory, setInventory] = useState(null);
+
+  useEffect(() => {
+    const loadInventory = async () => {
+      try {
+        const inventoryData = await AsyncStorage.getItem('inventory');
+        if (inventoryData) {
+          setInventory(JSON.parse(inventoryData));
+        }
+      } catch (error) {
+        console.error('Error al obtener el inventario:', error);
+      }
+    };
+
+    loadInventory();
+  }, []);
+
+  const handleLogout = async () => {
+    // Limpiar AsyncStorage y redirigir a la pantalla de login
+    await AsyncStorage.clear();
+    navigation.navigate('Login');
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Página Principal</Text>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('Login')}>
+
+      {inventory ? (
+        <View>
+          <Text>Coins: {inventory.coins}</Text>
+          <Text>Diamonds: {inventory.diamonds}</Text>
+          <Text>Level: {inventory.level}</Text>
+          <Text>Exp: {inventory.exp}</Text>
+        </View>
+      ) : (
+        <Text>Cargando inventario...</Text>
+      )}
+
+      <TouchableOpacity style={styles.button} onPress={handleLogout}>
         <Text style={styles.buttonText}>Cerrar Sesión</Text>
       </TouchableOpacity>
     </View>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ActivityIndicator } from 'react-native';
 import api from '../src/api'; // Asegúrate de tener configurada tu instancia de Axios
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Para guardar el token
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -19,8 +20,15 @@ export default function LoginScreen({ navigation }) {
       setLoading(false);
 
       if (response.status === 200) {
+        // Guardamos el token en AsyncStorage para futuras peticiones
+        await AsyncStorage.setItem('token', response.data.token);
+
+        // También guardamos el inventario en AsyncStorage
+        const inventory = response.data.inventory;
+        await AsyncStorage.setItem('inventory', JSON.stringify(inventory)); // Guardar como string
+
         Alert.alert('Éxito', 'Inicio de sesión exitoso');
-        navigation.navigate('Home'); // Redirigir a la pantalla principal
+        navigation.navigate('Home'); // Navegar a la pantalla principal
       }
     } catch (error) {
       setLoading(false);
