@@ -71,7 +71,13 @@ export default function Blackjack({ navigation }) {
       </View>
       {/* Saludo con nombre del usuario */}
       <Text style={styles.greeting}>Blackjack!</Text>
-
+        {/* Botón para volver al Home */}
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('Home')} // Aquí usas el nombre de la pantalla Home
+      >
+        <Text style={styles.buttonText}>Volver al Home</Text>
+      </TouchableOpacity>
   
     </View>
   );

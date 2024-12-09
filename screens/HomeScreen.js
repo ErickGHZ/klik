@@ -45,6 +45,17 @@ export default function HomeScreen({ navigation }) {
 
   const nextLevelXP = calculateNextLevelXP(inventory.level);
 
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('inventory');
+      Alert.alert('Sesión cerrada', 'Has cerrado sesión correctamente.');
+      navigation.replace('Login');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      Alert.alert('Error', 'Hubo un problema al cerrar sesión.');
+    }
+  };
 
 
   return (
@@ -94,6 +105,7 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
+
     </View>
   );
 }
