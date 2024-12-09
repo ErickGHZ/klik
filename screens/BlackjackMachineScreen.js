@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, Alert, TouchableOpacity } from 'react-na
 import api from '../src/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function HomeScreen({ navigation }) {
+export default function Blackjack({ navigation }) {
   const [inventory, setInventory] = useState(null);
 
   useEffect(() => {
@@ -49,7 +49,6 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-
       {/* Información de nivel y XP */}
       <View style={styles.header}>
         <View style={styles.leftHeader}>
@@ -71,29 +70,9 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
       {/* Saludo con nombre del usuario */}
-      <Text style={styles.greeting}>¡Hola!</Text>
+      <Text style={styles.greeting}>Blackjack!</Text>
 
-      {/* Sección de Juegos */}
-      <Text style={styles.sectionTitle}>Juegos</Text>
-      <View style={styles.gamesContainer}>
-        {/* Juego 1 */}
-        <View style={styles.gameCard}>
-          <Image source={require('../assets/game1.png')} style={styles.gameImage} />
-          <Text style={styles.gameTitle}>Trapaperras</Text>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('SlotMachine')}>
-            <Text style={styles.buttonText}>Jugar</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Juego 2 */}
-        <View style={styles.gameCard}>
-          <Image source={require('../assets/game2.png')} style={styles.gameImage} />
-          <Text style={styles.gameTitle}>Blackjack</Text>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Blackjack')}>
-            <Text style={styles.buttonText}>Jugar</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+  
     </View>
   );
 }
