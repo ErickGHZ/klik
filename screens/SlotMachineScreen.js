@@ -47,35 +47,50 @@ export default function SlotMachine({ navigation }) {
       Alert.alert('Error', 'No tienes suficientes monedas.');
       return;
     }
-
+  
     // Descontamos las monedas inmediatamente al pulsar "Girar"
     const updatedInventory = { ...inventory, coins: inventory.coins - betAmount };
     setInventory(updatedInventory);
     AsyncStorage.setItem('inventory', JSON.stringify(updatedInventory)); // Guardamos en AsyncStorage
-
+  
     setSpinning(true);
-
+  
+    // Calculamos el XP ganado
+    const xpGained = Math.floor(betAmount / 10); // 1 XP por cada 10 monedas apostadas
+    let updatedExp = inventory.exp + xpGained;
+  
+    // Verificamos si el usuario sube de nivel
+    const nextLevelXP = calculateNextLevelXP(inventory.level);
+    if (updatedExp >= nextLevelXP) {
+      updatedExp = 0; // Resetear XP
+      updatedInventory.level = inventory.level + 1; // Subir de nivel
+      Alert.alert('¡Felicidades!', '¡Has subido de nivel!');
+    }
+  
     // Simulación de giro
     setTimeout(() => {
       setSpinning(false);
       const outcome = Math.random() > 0.5 ? '¡Ganaste!' : 'Perdiste...';
-
+  
       if (outcome === '¡Ganaste!') {
         // Ganancia: duplicar la apuesta
         const winnings = betAmount * 2;
-        const finalInventory = { ...updatedInventory, coins: updatedInventory.coins + winnings };
+        const finalInventory = { ...updatedInventory, coins: updatedInventory.coins + winnings, exp: updatedExp };
         setInventory(finalInventory);
         AsyncStorage.setItem('inventory', JSON.stringify(finalInventory)); // Guardamos en AsyncStorage
         Alert.alert(outcome, `¡Felicidades! Ganaste ${winnings} monedas.`);
       } else {
         // Perdió: no hacemos nada más, ya se descontó la apuesta
+        const finalInventory = { ...updatedInventory, exp: updatedExp };
+        setInventory(finalInventory);
+        AsyncStorage.setItem('inventory', JSON.stringify(finalInventory)); // Guardamos en AsyncStorage
         Alert.alert(outcome, `Perdiste ${betAmount} monedas.`);
       }
-
+  
       // Incrementamos el contador de tiradas
       const newSpinCount = spinCount + 1;
       setSpinCount(newSpinCount);
-
+  
       // Si llegamos a 10 tiradas, sincronizamos con la base de datos
       if (newSpinCount >= 10) {
         updateInventoryInDB(updatedInventory);
@@ -83,6 +98,7 @@ export default function SlotMachine({ navigation }) {
       }
     }, 2000); // Simula el giro durante 2 segundos
   };
+  
 
   const handleBetChange = (value) => {
     if (value < 10) return; // No permite que el valor de la apuesta sea menor que 10
