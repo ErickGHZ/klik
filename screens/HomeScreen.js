@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, Alert, TouchableOpacity } from 'react-native';
 import api from '../src/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -27,37 +27,6 @@ export default function HomeScreen({ navigation }) {
     return Math.floor(previousXP * 1.2);
   };
 
-  const handleAddXP = async () => {
-    if (!inventory) return;
-
-    const currentLevel = inventory.level;
-    const currentXP = inventory.exp;
-    const xpNeeded = calculateNextLevelXP(currentLevel);
-
-    let newLevel = currentLevel;
-    let remainingXP = currentXP + 5;
-
-    if (remainingXP >= xpNeeded) {
-      newLevel += 1;
-      remainingXP -= xpNeeded;
-
-      Alert.alert('¡Subiste de nivel!', `Nivel ${newLevel} alcanzado. Ganaste 50 monedas y 1 diamante.`);
-
-      inventory.coins += 50;
-      inventory.diamonds += 1;
-    }
-
-    const updatedInventory = {
-      ...inventory,
-      level: newLevel,
-      exp: remainingXP,
-    };
-
-    setInventory(updatedInventory);
-    await AsyncStorage.setItem('inventory', JSON.stringify(updatedInventory));
-    updateInventoryInDB(updatedInventory);
-  };
-
   const updateInventoryInDB = async (updatedInventory) => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -74,22 +43,14 @@ export default function HomeScreen({ navigation }) {
     return <Text>Cargando...</Text>;
   }
 
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('inventory');
-      Alert.alert('Sesión cerrada', 'Has cerrado sesión correctamente.');
-      navigation.replace('Login');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-      Alert.alert('Error', 'Hubo un problema al cerrar sesión.');
-    }
-  };
-
   const nextLevelXP = calculateNextLevelXP(inventory.level);
+
+
 
   return (
     <View style={styles.container}>
+
+      {/* Información de nivel y XP */}
       <View style={styles.header}>
         <View style={styles.leftHeader}>
           <Text style={styles.levelText}>Nivel {inventory.level}</Text>
@@ -98,6 +59,7 @@ export default function HomeScreen({ navigation }) {
           </Text>
         </View>
         <View style={styles.rightHeader}>
+      
           <View style={styles.item}>
             <Image source={require('../assets/coin-icon.png')} style={styles.icon} />
             <Text style={styles.itemText}>{inventory.coins}</Text>
@@ -108,18 +70,37 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
       </View>
-      <TouchableOpacity style={styles.button} onPress={handleAddXP}>
-        <Text style={styles.buttonText}>Ganar 5 XP</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
-      </TouchableOpacity>
+      {/* Saludo con nombre del usuario */}
+      <Text style={styles.greeting}>¡Hola!</Text>
+
+      {/* Sección de Juegos */}
+      <Text style={styles.sectionTitle}>Juegos</Text>
+      <View style={styles.gamesContainer}>
+        {/* Juego 1 */}
+        <View style={styles.gameCard}>
+          <Image source={require('../assets/game1.png')} style={styles.gameImage} />
+          <Text style={styles.gameTitle}>Trapaperras</Text>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>Jugar</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Juego 2 */}
+        <View style={styles.gameCard}>
+          <Image source={require('../assets/game2.png')} style={styles.gameImage} />
+          <Text style={styles.gameTitle}>Blackjack</Text>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>Jugar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 40, paddingHorizontal: 20 },
+  greeting: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   leftHeader: { flexDirection: 'column', alignItems: 'flex-start' },
   rightHeader: { flexDirection: 'column', alignItems: 'flex-end' },
@@ -128,8 +109,11 @@ const styles = StyleSheet.create({
   itemText: { fontSize: 16, fontWeight: 'bold' },
   levelText: { fontSize: 20, fontWeight: 'bold' },
   expText: { fontSize: 16, marginVertical: 5 },
-  button: { backgroundColor: '#007BFF', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 5, alignItems: 'center', marginTop: 20 },
+  sectionTitle: { fontSize: 20, fontWeight: 'bold', marginVertical: 20 },
+  gamesContainer: { flexDirection: 'row', justifyContent: 'space-between' },
+  gameCard: { width: '48%', backgroundColor: '#f4f4f4', borderRadius: 10, padding: 10, alignItems: 'center' },
+  gameImage: { width: 100, height: 100, marginBottom: 10 },
+  gameTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+  button: { backgroundColor: '#007BFF', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 5, alignItems: 'center', marginTop: 10 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  logoutButton: { backgroundColor: '#FF4C4C' },
-  logoutButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });
