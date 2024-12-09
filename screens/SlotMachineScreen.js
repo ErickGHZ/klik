@@ -8,8 +8,11 @@ export default function SlotMachine({ navigation }) {
   const [betAmount, setBetAmount] = useState(10); // Valor inicial de la apuesta
   const [spinning, setSpinning] = useState(false);
   const [spinCount, setSpinCount] = useState(0); // Contador de tiradas
-  const [fruits, setFruits] = useState([]);
-  const [slotValues, setSlotValues] = useState([]); // Para almacenar los valores generados
+  const [slotValues, setSlotValues] = useState([
+    { name: 'seven', value: 50, image: require('../assets/fruits/seven.png') },
+    { name: 'seven', value: 50, image: require('../assets/fruits/seven.png') },
+    { name: 'seven', value: 50, image: require('../assets/fruits/seven.png') },
+  ]);
 
   useEffect(() => {
     const loadInventory = async () => {
@@ -45,10 +48,15 @@ export default function SlotMachine({ navigation }) {
   };
 
   const getRandomFruit = () => {
-    const fruitList = ['🍒', '🍊', '🍋', '🍉', '🍓'];
-    const valueList = [10, 20, 30, 40, 50]; // Valores que pueden corresponder a cada fruta
-    const randomIndex = Math.floor(Math.random() * fruitList.length);
-    return { fruit: fruitList[randomIndex], value: valueList[randomIndex] };
+    const fruits = [
+      { name: 'grape', value: 1000, image: require('../assets/fruits/grape.png') },
+      { name: 'lemon', value: 2000, image: require('../assets/fruits/lemon.png') },
+      { name: 'watermelon', value: 3000, image: require('../assets/fruits/watermelon.png') },
+      { name: 'cherry', value: 4000, image: require('../assets/fruits/cherry.png') },
+      { name: 'seven', value: 5000, image: require('../assets/fruits/seven.png') },
+    ];
+    const randomIndex = Math.floor(Math.random() * fruits.length);
+    return fruits[randomIndex];
   };
 
   const handleSpin = () => {
@@ -86,35 +94,45 @@ export default function SlotMachine({ navigation }) {
       if (outcome === '¡Ganaste!') {
         winnings = totalValue; // Ganancia basada en el valor de las frutas
         updatedExp += Math.floor(betAmount / 10); // XP basado en la apuesta
-        const finalInventory = { ...updatedInventory, coins: updatedInventory.coins + winnings };
-        setInventory(finalInventory);
-        AsyncStorage.setItem('inventory', JSON.stringify(finalInventory)); // Guardamos en AsyncStorage
+  
+        // Actualizamos el inventario con las monedas ganadas
+        updatedInventory.coins += winnings;
+  
+        // Actualizamos el inventario en el estado y AsyncStorage
+        setInventory(updatedInventory);
+        AsyncStorage.setItem('inventory', JSON.stringify(updatedInventory));
+  
+        // Primero muestra la alerta de ganancia
         Alert.alert(outcome, `¡Felicidades! Ganaste ${winnings} monedas.`, [
-          {
-            text: 'OK',
-            onPress: () => handleLevelUp(updatedExp, currentLevel, updatedInventory),
-          },
+          { text: 'OK', onPress: () => checkLevelUp(updatedInventory, updatedExp, currentLevel, nextLevelXP) },
         ]);
       } else {
         updatedExp += Math.floor(betAmount / 10); // XP basado en la apuesta
         Alert.alert(outcome, `Perdiste ${betAmount} monedas.`, [
-          {
-            text: 'OK',
-            onPress: () => handleLevelUp(updatedExp, currentLevel, updatedInventory),
-          },
+          { text: 'OK', onPress: () => checkLevelUp(updatedInventory, updatedExp, currentLevel, nextLevelXP) },
         ]);
+      }
+  
+      // Incrementamos el contador de tiradas
+      const newSpinCount = spinCount + 1;
+      setSpinCount(newSpinCount);
+  
+      // Si llegamos a 10 tiradas, sincronizamos con la base de datos
+      if (newSpinCount >= 10) {
+        updateInventoryInDB(updatedInventory);
+        setSpinCount(0); // Reiniciamos el contador de tiradas
       }
     }, 2000); // Simula el giro durante 2 segundos
   };
   
-  // Función separada para manejar el nivel
-  const handleLevelUp = (updatedExp, currentLevel, updatedInventory) => {
-    let nextLevelXP = calculateNextLevelXP(currentLevel);
+  const checkLevelUp = (updatedInventory, updatedExp, currentLevel, nextLevelXP) => {
+    // Verificamos si el usuario sube de nivel después del resultado
+    let levelUpMessage = '';  // Mensaje de subida de nivel
     while (updatedExp >= nextLevelXP) {
       updatedExp -= nextLevelXP; // Transferimos el exceso al siguiente nivel
       currentLevel++;
       nextLevelXP = calculateNextLevelXP(currentLevel);
-      Alert.alert('¡Felicidades!', `¡Has subido al nivel ${currentLevel}!`);
+      levelUpMessage = `¡Has subido al nivel ${currentLevel}!`; // Preparamos el mensaje
     }
   
     // Actualizamos el inventario con el XP y nivel
@@ -126,18 +144,13 @@ export default function SlotMachine({ navigation }) {
     setInventory(finalInventory);
     AsyncStorage.setItem('inventory', JSON.stringify(finalInventory)); // Guardamos en AsyncStorage
   
-    // Incrementamos el contador de tiradas
-    const newSpinCount = spinCount + 1;
-    setSpinCount(newSpinCount);
-  
-    // Sincronizamos con la base de datos si llegamos a 10 tiradas
-    if (newSpinCount >= 10) {
-      updateInventoryInDB(finalInventory);
-      setSpinCount(0); // Reiniciamos el contador de tiradas
+    // Si hubo subida de nivel, mostramos la alerta de subida de nivel
+    if (levelUpMessage) {
+      Alert.alert('¡Felicidades!', levelUpMessage);
     }
   };
   
-  
+
   
 
   const handleBetChange = (value) => {
@@ -161,7 +174,6 @@ export default function SlotMachine({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Información de nivel y XP */}
       <View style={styles.header}>
         <View style={styles.leftHeader}>
           <Text style={styles.levelText}>Nivel {inventory.level}</Text>
@@ -180,23 +192,21 @@ export default function SlotMachine({ navigation }) {
           </View>
         </View>
       </View>
-      {/* Saludo con nombre del usuario */}
       <Text style={styles.greeting}>¡Bienvenido a Slot Machine!</Text>
 
-      {/* Cuadro del slot */}
       <View style={styles.slotContainer}>
         <Text style={styles.slotTitle}>¡Haz girar el slot!</Text>
         <View style={styles.slot}>
-          <Text style={styles.slotText}>
-            {spinning ? 'Girando...' : `${fruits[0]} ${fruits[1]} ${fruits[2]}`}
-          </Text>
-          <Text style={styles.slotValueText}>
-            {spinning ? '' : `Valor: ${slotValues.join(' - ')}`}
-          </Text>
+          {slotValues.map((slot, index) => (
+            <Image
+              key={index}
+              source={slot.image}
+              style={styles.slotImage} // Añadimos estilo para las imágenes
+            />
+          ))}
         </View>
       </View>
 
-      {/* Campo de cantidad de apuesta */}
       <View style={styles.betContainer}>
         <Text style={styles.betText}>Cantidad para apostar:</Text>
         <View style={styles.betControls}>
@@ -215,19 +225,17 @@ export default function SlotMachine({ navigation }) {
         </View>
       </View>
 
-      {/* Botón para girar */}
       <TouchableOpacity
         style={styles.button}
         onPress={handleSpin}
-        disabled={spinning} // Deshabilita el botón durante el giro
+        disabled={spinning}
       >
         <Text style={styles.buttonText}>Girar</Text>
       </TouchableOpacity>
 
-      {/* Botón para volver al Home */}
       <TouchableOpacity 
         style={styles.button}
-        onPress={handleGoHome} // Aquí usas el nombre de la pantalla Home
+        onPress={handleGoHome}
       >
         <Text style={styles.buttonText}>Volver al Home</Text>
       </TouchableOpacity>
@@ -248,9 +256,8 @@ const styles = StyleSheet.create({
   expText: { fontSize: 16, marginVertical: 5 },
   slotContainer: { marginVertical: 20, alignItems: 'center' },
   slotTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  slot: { backgroundColor: '#f4f4f4', padding: 30, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
-  slotText: { fontSize: 36 },
-  slotValueText: { fontSize: 18, marginTop: 10, fontWeight: 'bold' },
+  slot: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  slotImage: { width: 60, height: 60, marginHorizontal: 5 },
   betContainer: { marginVertical: 20, alignItems: 'center' },
   betText: { fontSize: 18, marginBottom: 10 },
   betControls: { flexDirection: 'row', alignItems: 'center' },
