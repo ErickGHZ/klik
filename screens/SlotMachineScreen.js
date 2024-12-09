@@ -8,6 +8,8 @@ export default function SlotMachine({ navigation }) {
   const [betAmount, setBetAmount] = useState(10); // Valor inicial de la apuesta
   const [spinning, setSpinning] = useState(false);
   const [spinCount, setSpinCount] = useState(0); // Contador de tiradas
+  const [fruits, setFruits] = useState([]);
+  const [slotValues, setSlotValues] = useState([]); // Para almacenar los valores generados
 
   useEffect(() => {
     const loadInventory = async () => {
@@ -42,6 +44,13 @@ export default function SlotMachine({ navigation }) {
     }
   };
 
+  const getRandomFruit = () => {
+    const fruitList = ['🍒', '🍊', '🍋', '🍉', '🍓'];
+    const valueList = [10, 20, 30, 40, 50]; // Valores que pueden corresponder a cada fruta
+    const randomIndex = Math.floor(Math.random() * fruitList.length);
+    return { fruit: fruitList[randomIndex], value: valueList[randomIndex] };
+  };
+
   const handleSpin = () => {
     if (betAmount > inventory.coins) {
       Alert.alert('Error', 'No tienes suficientes monedas.');
@@ -55,49 +64,80 @@ export default function SlotMachine({ navigation }) {
   
     setSpinning(true);
   
-    // Calculamos el XP ganado
-    const xpGained = Math.floor(betAmount / 10); // 1 XP por cada 10 monedas apostadas
-    let updatedExp = inventory.exp + xpGained;
-  
-    // Verificamos si el usuario sube de nivel
-    const nextLevelXP = calculateNextLevelXP(inventory.level);
-    if (updatedExp >= nextLevelXP) {
-      updatedExp = 0; // Resetear XP
-      updatedInventory.level = inventory.level + 1; // Subir de nivel
-      Alert.alert('¡Felicidades!', '¡Has subido de nivel!');
-    }
-  
     // Simulación de giro
     setTimeout(() => {
       setSpinning(false);
-      const outcome = Math.random() > 0.5 ? '¡Ganaste!' : 'Perdiste...';
+  
+      // Generación aleatoria de frutas y valores
+      const slot1 = getRandomFruit();
+      const slot2 = getRandomFruit();
+      const slot3 = getRandomFruit();
+      setSlotValues([slot1.value, slot2.value, slot3.value]);
+  
+      // Determinar si ganó
+      const totalValue = slot1.value + slot2.value + slot3.value;
+      const outcome = totalValue >= betAmount ? '¡Ganaste!' : 'Perdiste...';
+  
+      let winnings = 0;
+      let updatedExp = inventory.exp; // Comenzamos con el XP actual
+      let currentLevel = inventory.level; // Nivel actual
+      let nextLevelXP = calculateNextLevelXP(currentLevel); // XP necesario para el siguiente nivel
   
       if (outcome === '¡Ganaste!') {
-        // Ganancia: duplicar la apuesta
-        const winnings = betAmount * 2;
-        const finalInventory = { ...updatedInventory, coins: updatedInventory.coins + winnings, exp: updatedExp };
+        winnings = totalValue; // Ganancia basada en el valor de las frutas
+        updatedExp += Math.floor(betAmount / 10); // XP basado en la apuesta
+        const finalInventory = { ...updatedInventory, coins: updatedInventory.coins + winnings };
         setInventory(finalInventory);
         AsyncStorage.setItem('inventory', JSON.stringify(finalInventory)); // Guardamos en AsyncStorage
-        Alert.alert(outcome, `¡Felicidades! Ganaste ${winnings} monedas.`);
+        Alert.alert(outcome, `¡Felicidades! Ganaste ${winnings} monedas.`, [
+          {
+            text: 'OK',
+            onPress: () => handleLevelUp(updatedExp, currentLevel, updatedInventory),
+          },
+        ]);
       } else {
-        // Perdió: no hacemos nada más, ya se descontó la apuesta
-        const finalInventory = { ...updatedInventory, exp: updatedExp };
-        setInventory(finalInventory);
-        AsyncStorage.setItem('inventory', JSON.stringify(finalInventory)); // Guardamos en AsyncStorage
-        Alert.alert(outcome, `Perdiste ${betAmount} monedas.`);
-      }
-  
-      // Incrementamos el contador de tiradas
-      const newSpinCount = spinCount + 1;
-      setSpinCount(newSpinCount);
-  
-      // Si llegamos a 10 tiradas, sincronizamos con la base de datos
-      if (newSpinCount >= 10) {
-        updateInventoryInDB(updatedInventory);
-        setSpinCount(0); // Reiniciamos el contador de tiradas
+        updatedExp += Math.floor(betAmount / 10); // XP basado en la apuesta
+        Alert.alert(outcome, `Perdiste ${betAmount} monedas.`, [
+          {
+            text: 'OK',
+            onPress: () => handleLevelUp(updatedExp, currentLevel, updatedInventory),
+          },
+        ]);
       }
     }, 2000); // Simula el giro durante 2 segundos
   };
+  
+  // Función separada para manejar el nivel
+  const handleLevelUp = (updatedExp, currentLevel, updatedInventory) => {
+    let nextLevelXP = calculateNextLevelXP(currentLevel);
+    while (updatedExp >= nextLevelXP) {
+      updatedExp -= nextLevelXP; // Transferimos el exceso al siguiente nivel
+      currentLevel++;
+      nextLevelXP = calculateNextLevelXP(currentLevel);
+      Alert.alert('¡Felicidades!', `¡Has subido al nivel ${currentLevel}!`);
+    }
+  
+    // Actualizamos el inventario con el XP y nivel
+    const finalInventory = {
+      ...updatedInventory,
+      exp: updatedExp,
+      level: currentLevel,
+    };
+    setInventory(finalInventory);
+    AsyncStorage.setItem('inventory', JSON.stringify(finalInventory)); // Guardamos en AsyncStorage
+  
+    // Incrementamos el contador de tiradas
+    const newSpinCount = spinCount + 1;
+    setSpinCount(newSpinCount);
+  
+    // Sincronizamos con la base de datos si llegamos a 10 tiradas
+    if (newSpinCount >= 10) {
+      updateInventoryInDB(finalInventory);
+      setSpinCount(0); // Reiniciamos el contador de tiradas
+    }
+  };
+  
+  
   
 
   const handleBetChange = (value) => {
@@ -147,7 +187,12 @@ export default function SlotMachine({ navigation }) {
       <View style={styles.slotContainer}>
         <Text style={styles.slotTitle}>¡Haz girar el slot!</Text>
         <View style={styles.slot}>
-          <Text style={styles.slotText}>{spinning ? 'Girando...' : '🍒 🍊 🍋'}</Text> {/* Aquí va el slot con emojis */}
+          <Text style={styles.slotText}>
+            {spinning ? 'Girando...' : `${fruits[0]} ${fruits[1]} ${fruits[2]}`}
+          </Text>
+          <Text style={styles.slotValueText}>
+            {spinning ? '' : `Valor: ${slotValues.join(' - ')}`}
+          </Text>
         </View>
       </View>
 
@@ -205,6 +250,7 @@ const styles = StyleSheet.create({
   slotTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
   slot: { backgroundColor: '#f4f4f4', padding: 30, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   slotText: { fontSize: 36 },
+  slotValueText: { fontSize: 18, marginTop: 10, fontWeight: 'bold' },
   betContainer: { marginVertical: 20, alignItems: 'center' },
   betText: { fontSize: 18, marginBottom: 10 },
   betControls: { flexDirection: 'row', alignItems: 'center' },

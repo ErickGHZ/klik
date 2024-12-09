@@ -106,6 +106,10 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
 
+      <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
+        <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
+      </TouchableOpacity>
+
     </View>
   );
 }
