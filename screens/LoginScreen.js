@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ActivityIndicator } from 'react-native';
 import api from '../src/api'; // Asegúrate de tener configurada tu instancia de Axios
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Para guardar el token
@@ -8,6 +8,19 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Verificar si hay un token almacenado al cargar la pantalla
+  useEffect(() => {
+    const checkSession = async () => {
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        // Si hay un token, navegar automáticamente a la pantalla de Home
+        navigation.replace('Home');
+      }
+    };
+
+    checkSession();
+  }, [navigation]);
+
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Por favor completa todos los campos');
@@ -16,7 +29,7 @@ export default function LoginScreen({ navigation }) {
 
     setLoading(true); // Mostrar pantalla de carga mientras se procesa
     try {
-      const response = await api.post('/login', { email, password });
+      const response = await api.post('/auth/login', { email, password });
       setLoading(false);
 
       if (response.status === 200) {

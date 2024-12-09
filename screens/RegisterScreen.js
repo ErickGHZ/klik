@@ -16,7 +16,7 @@ export default function RegisterScreen({ navigation }) {
 
     try {
       // Hacer la petición al backend
-      const response = await api.post('/register', {
+      const response = await api.post('/auth/register', {
         name,
         email,
         password,
