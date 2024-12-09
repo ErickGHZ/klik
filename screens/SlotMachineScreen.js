@@ -48,17 +48,28 @@ export default function SlotMachine({ navigation }) {
   };
 
   const getRandomFruit = () => {
+    // Definir las frutas con sus probabilidades y valores ajustados a 1
     const fruits = [
-      { name: 'grape', value: 1000, image: require('../assets/fruits/grape.png') },
-      { name: 'lemon', value: 2000, image: require('../assets/fruits/lemon.png') },
-      { name: 'watermelon', value: 3000, image: require('../assets/fruits/watermelon.png') },
-      { name: 'cherry', value: 4000, image: require('../assets/fruits/cherry.png') },
-      { name: 'seven', value: 5000, image: require('../assets/fruits/seven.png') },
+      { name: 'grape', value: 2, image: require('../assets/fruits/grape.png'), probability: 0.4 }, // 40% de chance
+      { name: 'lemon', value: 3, image: require('../assets/fruits/lemon.png'), probability: 0.3 }, // 30% de chance
+      { name: 'watermelon', value: 5, image: require('../assets/fruits/watermelon.png'), probability: 0.2 }, // 20% de chance
+      { name: 'cherry', value: 7, image: require('../assets/fruits/cherry.png'), probability: 0.1 }, // 10% de chance
+      { name: 'seven', value: 10, image: require('../assets/fruits/seven.png'), probability: 0.05 }, // 5% de chance
     ];
-    const randomIndex = Math.floor(Math.random() * fruits.length);
-    return fruits[randomIndex];
+  
+    // Generar un número aleatorio entre 0 y 1
+    const rand = Math.random();
+  
+    // Calcular la fruta a partir de las probabilidades
+    let cumulativeProbability = 0;
+    for (let fruit of fruits) {
+      cumulativeProbability += fruit.probability;
+      if (rand <= cumulativeProbability) {
+        return fruit; // Devolver la fruta seleccionada
+      }
+    }
   };
-
+  
   const handleSpin = () => {
     if (betAmount > inventory.coins) {
       Alert.alert('Error', 'No tienes suficientes monedas.');
@@ -80,38 +91,58 @@ export default function SlotMachine({ navigation }) {
       const slot1 = getRandomFruit();
       const slot2 = getRandomFruit();
       const slot3 = getRandomFruit();
-      setSlotValues([slot1.value, slot2.value, slot3.value]);
+      setSlotValues([slot1, slot2, slot3]); // Aquí cambiamos de valores a objetos completos
   
-      // Determinar si ganó
-      const totalValue = slot1.value + slot2.value + slot3.value;
-      const outcome = totalValue >= betAmount ? '¡Ganaste!' : 'Perdiste...';
-  
+      // Comprobamos cuántas frutas se repiten
+      const fruits = [slot1.name, slot2.name, slot3.name];
+      const uniqueFruits = new Set(fruits);
       let winnings = 0;
+  
+      // Premios según combinaciones
+      if (uniqueFruits.size === 1) {
+        // Tres iguales
+        winnings = betAmount * (slot1.value / 1); // Premio proporcional al valor de la fruta
+      } else if (uniqueFruits.size === 2) {
+        // Dos iguales: encontrar la fruta que se repite y usar su valor
+        const repeatedFruit = fruits.find(fruit => fruits.filter(f => f === fruit).length === 2);
+        const matchingSlot = [slot1, slot2, slot3].find(slot => slot.name === repeatedFruit);
+        winnings = betAmount * (matchingSlot.value / 2); // Premio moderado
+      } else {
+        // Ninguna repetida
+        winnings = 0;
+      }
+  
+      // Determinar el resultado
+      const outcome = winnings > 0 ? '¡Ganaste!' : 'Perdiste...';
+  
       let updatedExp = inventory.exp; // Comenzamos con el XP actual
       let currentLevel = inventory.level; // Nivel actual
       let nextLevelXP = calculateNextLevelXP(currentLevel); // XP necesario para el siguiente nivel
   
       if (outcome === '¡Ganaste!') {
-        winnings = totalValue; // Ganancia basada en el valor de las frutas
         updatedExp += Math.floor(betAmount / 10); // XP basado en la apuesta
-  
-        // Actualizamos el inventario con las monedas ganadas
-        updatedInventory.coins += winnings;
-  
-        // Actualizamos el inventario en el estado y AsyncStorage
-        setInventory(updatedInventory);
-        AsyncStorage.setItem('inventory', JSON.stringify(updatedInventory));
-  
-        // Primero muestra la alerta de ganancia
-        Alert.alert(outcome, `¡Felicidades! Ganaste ${winnings} monedas.`, [
-          { text: 'OK', onPress: () => checkLevelUp(updatedInventory, updatedExp, currentLevel, nextLevelXP) },
-        ]);
+        updatedInventory.coins += winnings; // Ganancia de monedas
       } else {
         updatedExp += Math.floor(betAmount / 10); // XP basado en la apuesta
-        Alert.alert(outcome, `Perdiste ${betAmount} monedas.`, [
-          { text: 'OK', onPress: () => checkLevelUp(updatedInventory, updatedExp, currentLevel, nextLevelXP) },
-        ]);
       }
+        
+      // Actualizamos el inventario con la nueva XP y monedas
+      setInventory(updatedInventory);
+      AsyncStorage.setItem('inventory', JSON.stringify(updatedInventory)); // Guardamos en AsyncStorage
+  
+      // Primero muestra la alerta de ganancia o pérdida
+      Alert.alert(
+        outcome,
+        outcome === '¡Ganaste!' 
+          ? `¡Felicidades! Ganaste ${winnings} monedas.` 
+          : '¡Inténtalo de nuevo!',
+        [
+          { 
+            text: 'OK', 
+            onPress: () => checkLevelUp(updatedInventory, updatedExp, currentLevel, nextLevelXP) 
+          },
+        ]
+      );
   
       // Incrementamos el contador de tiradas
       const newSpinCount = spinCount + 1;
@@ -125,6 +156,9 @@ export default function SlotMachine({ navigation }) {
     }, 2000); // Simula el giro durante 2 segundos
   };
   
+  
+  
+
   const checkLevelUp = (updatedInventory, updatedExp, currentLevel, nextLevelXP) => {
     // Verificamos si el usuario sube de nivel después del resultado
     let levelUpMessage = '';  // Mensaje de subida de nivel
