@@ -51,10 +51,10 @@ export default function SlotMachine({ navigation }) {
     // Definir las frutas con sus probabilidades y valores ajustados a 1
     const fruits = [
       { name: 'grape', value: 2, image: require('../assets/fruits/grape.png'), probability: 0.4 }, // 40% de chance
-      { name: 'lemon', value: 3, image: require('../assets/fruits/lemon.png'), probability: 0.3 }, // 30% de chance
-      { name: 'watermelon', value: 5, image: require('../assets/fruits/watermelon.png'), probability: 0.2 }, // 20% de chance
-      { name: 'cherry', value: 7, image: require('../assets/fruits/cherry.png'), probability: 0.1 }, // 10% de chance
-      { name: 'seven', value: 10, image: require('../assets/fruits/seven.png'), probability: 0.05 }, // 5% de chance
+      { name: 'lemon', value: 4, image: require('../assets/fruits/lemon.png'), probability: 0.3 }, // 30% de chance
+      { name: 'watermelon', value: 8, image: require('../assets/fruits/watermelon.png'), probability: 0.2 }, // 20% de chance
+      { name: 'cherry', value: 16, image: require('../assets/fruits/cherry.png'), probability: 0.1 }, // 10% de chance
+      { name: 'seven', value: 32, image: require('../assets/fruits/seven.png'), probability: 0.05 }, // 5% de chance
     ];
   
     // Generar un número aleatorio entre 0 y 1
