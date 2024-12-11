@@ -13,6 +13,7 @@ export default function SlotMachine({ navigation }) {
     { name: 'seven', value: 50, image: require('../assets/fruits/seven.png') },
     { name: 'seven', value: 50, image: require('../assets/fruits/seven.png') },
   ]);
+  const [outcomeMessage, setOutcomeMessage] = useState('');
 
   useEffect(() => {
     const loadInventory = async () => {
@@ -56,6 +57,7 @@ export default function SlotMachine({ navigation }) {
       { name: 'cherry', value: 16, image: require('../assets/fruits/cherry.png'), probability: 0.1 }, // 10% de chance
       { name: 'seven', value: 32, image: require('../assets/fruits/seven.png'), probability: 0.05 }, // 5% de chance
     ];
+  
   
     // Generar un número aleatorio entre 0 y 1
     const rand = Math.random();
@@ -131,18 +133,13 @@ export default function SlotMachine({ navigation }) {
       AsyncStorage.setItem('inventory', JSON.stringify(updatedInventory)); // Guardamos en AsyncStorage
   
       // Primero muestra la alerta de ganancia o pérdida
-      Alert.alert(
-        outcome,
-        outcome === '¡Ganaste!' 
-          ? `¡Felicidades! Ganaste ${winnings} monedas.` 
-          : '¡Inténtalo de nuevo!',
-        [
-          { 
-            text: 'OK', 
-            onPress: () => checkLevelUp(updatedInventory, updatedExp, currentLevel, nextLevelXP) 
-          },
-        ]
+      setOutcomeMessage(
+        outcome === '¡Ganaste!'
+          ? `Ganaste ${winnings} monedas.`
+          : '¡Inténtalo de nuevo!'
       );
+      checkLevelUp(updatedInventory, updatedExp, currentLevel, nextLevelXP);
+      
   
       // Incrementamos el contador de tiradas
       const newSpinCount = spinCount + 1;
@@ -153,7 +150,7 @@ export default function SlotMachine({ navigation }) {
         updateInventoryInDB(updatedInventory);
         setSpinCount(0); // Reiniciamos el contador de tiradas
       }
-    }, 2000); // Simula el giro durante 2 segundos
+    }, 1000); // Simula el giro durante 2 segundos
   };
   
   
@@ -259,6 +256,20 @@ export default function SlotMachine({ navigation }) {
         </View>
       </View>
 
+      {outcomeMessage ? (
+          <View
+            style={[
+              styles.outcomeContainer,
+              outcomeMessage.includes('Ganaste') ? { backgroundColor: 'green' } : { backgroundColor: 'red' },
+            ]}
+          >
+            <Text style={{ color: 'white', fontSize: 16, textAlign: 'center', fontWeight: 'bold' }}>
+              {outcomeMessage}
+            </Text>
+          </View>
+        ) : null}
+
+
       <TouchableOpacity
         style={styles.button}
         onPress={handleSpin}
@@ -299,4 +310,27 @@ const styles = StyleSheet.create({
   betInput: { width: 60, height: 40, textAlign: 'center', borderColor: '#ccc', borderWidth: 1, borderRadius: 5 },
   button: { backgroundColor: '#007BFF', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 5, alignItems: 'center', marginTop: 20 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  outcomeContainer: {
+    height: 50, // Altura fija
+    alignSelf: 'center', // Centrar horizontalmente
+    padding: 10, // Espaciado interno
+    borderRadius: 5, // Bordes redondeados
+  },  
+  outcomeMessage: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginVertical: 20,
+    padding: 10,
+    borderRadius: 5,
+  },
+  outcomeWin: {
+    color: 'white',
+    backgroundColor: 'green',
+  },
+  outcomeLose: {
+    color: 'white',
+    backgroundColor: 'red',
+  },
+  
 });
