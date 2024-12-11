@@ -80,6 +80,10 @@ export default function SlotMachine({ navigation }) {
   
     // Descontamos las monedas inmediatamente al pulsar "Girar"
     const updatedInventory = { ...inventory, coins: inventory.coins - betAmount };
+  
+    // Agregar animación para descontar monedas
+    animateCoins(inventory.coins, updatedInventory.coins);
+  
     setInventory(updatedInventory);
     AsyncStorage.setItem('inventory', JSON.stringify(updatedInventory)); // Guardamos en AsyncStorage
   
@@ -106,8 +110,12 @@ export default function SlotMachine({ navigation }) {
         winnings = betAmount * (slot1.value / 1); // Premio proporcional al valor de la fruta
       } else if (uniqueFruits.size === 2) {
         // Dos iguales: encontrar la fruta que se repite y usar su valor
-        const repeatedFruit = fruits.find(fruit => fruits.filter(f => f === fruit).length === 2);
-        const matchingSlot = [slot1, slot2, slot3].find(slot => slot.name === repeatedFruit);
+        const repeatedFruit = fruits.find(
+          (fruit) => fruits.filter((f) => f === fruit).length === 2
+        );
+        const matchingSlot = [slot1, slot2, slot3].find(
+          (slot) => slot.name === repeatedFruit
+        );
         winnings = betAmount * (matchingSlot.value / 2); // Premio moderado
       } else {
         // Ninguna repetida
@@ -123,11 +131,16 @@ export default function SlotMachine({ navigation }) {
   
       if (outcome === '¡Ganaste!') {
         updatedExp += Math.floor(betAmount / 10); // XP basado en la apuesta
-        updatedInventory.coins += winnings; // Ganancia de monedas
+        const newCoins = updatedInventory.coins + winnings;
+  
+        // Agregar animación para sumar monedas
+        animateCoins(updatedInventory.coins, newCoins);
+  
+        updatedInventory.coins = newCoins; // Ganancia de monedas
       } else {
         updatedExp += Math.floor(betAmount / 10); // XP basado en la apuesta
       }
-        
+  
       // Actualizamos el inventario con la nueva XP y monedas
       setInventory(updatedInventory);
       AsyncStorage.setItem('inventory', JSON.stringify(updatedInventory)); // Guardamos en AsyncStorage
@@ -139,7 +152,6 @@ export default function SlotMachine({ navigation }) {
           : '¡Inténtalo de nuevo!'
       );
       checkLevelUp(updatedInventory, updatedExp, currentLevel, nextLevelXP);
-      
   
       // Incrementamos el contador de tiradas
       const newSpinCount = spinCount + 1;
@@ -152,6 +164,7 @@ export default function SlotMachine({ navigation }) {
       }
     }, 1000); // Simula el giro durante 2 segundos
   };
+  
   
   
   
@@ -202,6 +215,26 @@ export default function SlotMachine({ navigation }) {
   }
 
   const nextLevelXP = calculateNextLevelXP(inventory.level);
+
+
+  const animateCoins = (start, end, duration = 100) => {
+    const difference = end - start;
+    const step = difference / 20; // Número de pasos (ajusta según sea necesario)
+    let current = start;
+    const interval = duration / 20; // Duración total dividida entre pasos
+  
+    const intervalId = setInterval(() => {
+      current += step;
+      if ((step > 0 && current >= end) || (step < 0 && current <= end)) {
+        current = end; // Asegúrate de no pasar del valor final
+        clearInterval(intervalId);
+      }
+      setInventory((prev) => ({ ...prev, coins: Math.round(current) }));
+    }, interval);
+  };
+  
+
+ 
 
   return (
     <View style={styles.container}>
@@ -267,7 +300,13 @@ export default function SlotMachine({ navigation }) {
               {outcomeMessage}
             </Text>
           </View>
-        ) : null}
+        ) :         <View
+        style={[
+          styles.outcomeContainer,
+        ]}
+      >
+     
+      </View>}
 
 
       <TouchableOpacity
