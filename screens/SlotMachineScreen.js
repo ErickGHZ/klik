@@ -130,26 +130,15 @@ export default function SlotMachine({ navigation }) {
       let nextLevelXP = calculateNextLevelXP(currentLevel); // XP necesario para el siguiente nivel
   
       if (outcome === '¡Ganaste!') {
-        const xpGained = Math.floor(betAmount / 10);
-        const newExp = inventory.exp + xpGained;
-        animateXP(inventory.exp, newExp);
-
-        updatedExp += xpGained;
-
+        updatedExp += Math.floor(betAmount / 10); // XP basado en la apuesta
         const newCoins = updatedInventory.coins + winnings;
-        
   
         // Agregar animación para sumar monedas
         animateCoins(updatedInventory.coins, newCoins);
   
         updatedInventory.coins = newCoins; // Ganancia de monedas
       } else {
-        const xpGained = Math.floor(betAmount / 10);
-        const newExp = inventory.exp + xpGained;
-        animateXP(inventory.exp, newExp);
-
-        updatedExp += xpGained;
-
+        updatedExp += Math.floor(betAmount / 10); // XP basado en la apuesta
       }
   
       // Actualizamos el inventario con la nueva XP y monedas
@@ -243,27 +232,8 @@ export default function SlotMachine({ navigation }) {
       setInventory((prev) => ({ ...prev, coins: Math.round(current) }));
     }, interval);
   };
-  const animateXP = (start, end, duration = 100) => {
-    const difference = end - start;
-    const step = difference / 20; // Número de pasos
-    let current = start;
-    const interval = duration / 20; // Duración total dividida entre pasos
-  
-    const intervalId = setInterval(() => {
-      current += step;
-      if (current >= end) {
-        current = end; // Asegúrate de no pasar del valor final
-        clearInterval(intervalId);
-      }
-      setInventory((prev) => ({
-        ...prev,
-        exp: Math.round(current),
-      }));
-    }, interval);
-  };
   
   
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
