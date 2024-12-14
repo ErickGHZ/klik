@@ -234,6 +234,30 @@ export default function SlotMachine({ navigation }) {
     }, interval);
   };
   
+  const formatCoin = (num) => {
+    if (num <= 9999999999) {
+      // Menor o igual a 10 dígitos: Mostrar completo con comas
+      return num.toLocaleString();
+    }
+  
+    if (num < 1e13) {
+      // Más de 10 dígitos pero menos de 13: Mostrar en miles (K)
+      const inThousands = Math.floor(num / 1e3); // Convertir a miles
+      return `${inThousands.toLocaleString()}K`; // Añadir comas y 'K'
+    }
+  
+    if (num < 1e16) {
+      // Más de 13 dígitos pero menos de 16: Mostrar en millones (M)
+      const inMillions = Math.floor(num / 1e6); // Convertir a millones
+      return `${inMillions.toLocaleString()}M`; // Añadir comas y 'M'
+    }
+  
+    // Más de 16 dígitos: Mostrar en billones (B)
+    const inBillions = Math.floor(num / 1e9); // Convertir a billones
+    return `${inBillions.toLocaleString()}B`; // Añadir comas y 'B'
+  };
+  
+  
   
   return (
     <View style={styles.container}>
@@ -254,7 +278,7 @@ export default function SlotMachine({ navigation }) {
         <View style={styles.rightHeader}>
           <View style={styles.item}>
             <Image source={require('../assets/coin-icon.png')} style={styles.icon} />
-            <Text style={styles.itemText}>{inventory.coins}</Text>
+            <Text style={styles.itemText}>{formatCoin(inventory.coins)}</Text>
           </View>
           <View style={styles.item}>
             <Image source={require('../assets/diamond-icon.png')} style={styles.icon} />
