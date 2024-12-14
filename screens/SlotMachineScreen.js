@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, Alert, TouchableOpacity, TextInput } from 'react-native';
 import api from '../src/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Progress from 'react-native-progress';
 
 export default function SlotMachine({ navigation }) {
   const [inventory, setInventory] = useState(null);
@@ -82,7 +83,7 @@ export default function SlotMachine({ navigation }) {
     const updatedInventory = { ...inventory, coins: inventory.coins - betAmount };
   
     // Agregar animación para descontar monedas
-    animateCoins(inventory.coins, updatedInventory.coins);
+    //animateCoins(inventory.coins, updatedInventory.coins);
   
     setInventory(updatedInventory);
     AsyncStorage.setItem('inventory', JSON.stringify(updatedInventory)); // Guardamos en AsyncStorage
@@ -134,7 +135,7 @@ export default function SlotMachine({ navigation }) {
         const newCoins = updatedInventory.coins + winnings;
   
         // Agregar animación para sumar monedas
-        animateCoins(updatedInventory.coins, newCoins);
+        //animateCoins(updatedInventory.coins, newCoins);
   
         updatedInventory.coins = newCoins; // Ganancia de monedas
       } else {
@@ -239,9 +240,16 @@ export default function SlotMachine({ navigation }) {
       <View style={styles.header}>
         <View style={styles.leftHeader}>
           <Text style={styles.levelText}>Nivel {inventory.level}</Text>
-          <Text style={styles.expText}>
-            XP {inventory.exp}/{nextLevelXP}
-          </Text>
+          <View style={styles.progressBar}>
+              <Progress.Bar
+                progress={inventory.exp / nextLevelXP}
+                width={120} 
+                color="#4caf50" 
+                unfilledColor="#ddd" 
+                borderWidth={0} 
+                height={10} 
+              />
+          </View>
         </View>
         <View style={styles.rightHeader}>
           <View style={styles.item}>
@@ -268,6 +276,7 @@ export default function SlotMachine({ navigation }) {
           ))}
         </View>
       </View>
+      
 
       <View style={styles.betContainer}>
         <Text style={styles.betText}>Cantidad para apostar:</Text>
@@ -334,7 +343,8 @@ const styles = StyleSheet.create({
   item: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   icon: { width: 30, height: 30, marginRight: 8 },
   itemText: { fontSize: 16, fontWeight: 'bold' },
-  levelText: { fontSize: 20, fontWeight: 'bold' },
+  levelText: { fontSize: 20, fontWeight: 'bold',  },
+  progressBar: {flex:1, paddingTop: 5},
   expText: { fontSize: 16, marginVertical: 5 },
   slotContainer: { marginVertical: 20, alignItems: 'center' },
   slotTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
